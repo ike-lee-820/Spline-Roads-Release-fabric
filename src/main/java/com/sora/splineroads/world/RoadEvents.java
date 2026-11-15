@@ -41,7 +41,7 @@ public final class RoadEvents {
       if(net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(placeEvent))return;
       if(!RoadData.get(server).infill(server,target,fill,player))return;
       if(!player.isCreative())e.getItemStack().shrink(1);
-      level.playSound(null,target,fill.getSoundType(level,target,player).getPlaceSound(),net.minecraft.sounds.SoundSource.BLOCKS,1,.8f);
+      level.playSound(null,target,fill.getSoundType().getPlaceSound(),net.minecraft.sounds.SoundSource.BLOCKS,1,.8f);
     }
     e.setCanceled(true);e.setCancellationResult(net.minecraft.world.InteractionResult.sidedSuccess(level.isClientSide));
   }

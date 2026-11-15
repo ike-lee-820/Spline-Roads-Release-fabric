@@ -30,7 +30,7 @@ public final class RoadFillEntity extends BlockEntity {
   public RoadFillEntity(BlockPos pos,BlockState state){super(SplineRoads.FILL_ENTITY.get(),pos,state);}
   public BlockState fill(){return contents.material();}
   /** Stable cheap fallback even if another renderer queries the entity. Never ask collision for bounds. */
-  @Override public AABB getRenderBoundingBox(){return new AABB(worldPosition).inflate(.002);}
+  public AABB getRenderBoundingBox(){return new AABB(worldPosition).inflate(.002);}
   public VoxelShape collision(BlockGetter world,BlockPos pos,CollisionContext context,VoxelShape road){
     // Chunk mesh/light workers and the main thread can query/update the same entity.
     // Read each immutable snapshot once; never expose partially cleared shape fields.

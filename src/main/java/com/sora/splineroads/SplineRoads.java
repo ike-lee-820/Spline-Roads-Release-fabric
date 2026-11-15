@@ -77,7 +77,7 @@ public final class SplineRoads {
       TABS.register(
           "roads",
           () ->
-              CreativeModeTab.builder()
+              CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)
                   .title(Component.translatable("itemGroup.splineroads"))
                   .icon(() -> new ItemStack(CONNECTOR.get()))
                   .displayItems(

@@ -30,7 +30,7 @@ public final class ForgeConfigSpec {
     }
   }
 
-  private static void save() {
+  private static void saveAll() {
     try {
       Files.createDirectories(FILE.getParent());
       JsonObject object = new JsonObject();
@@ -47,7 +47,7 @@ public final class ForgeConfigSpec {
     protected Base(String key, T fallback) { this.key = key; this.fallback = fallback; STORE.putIfAbsent(key, String.valueOf(fallback)); }
     protected String raw() { return STORE.getOrDefault(key, String.valueOf(fallback)); }
     public abstract T get();
-    public void set(T value) { STORE.put(key, String.valueOf(value)); save(); }
+    public void set(T value) { STORE.put(key, String.valueOf(value)); saveAll(); }
   }
 
   public static final class BooleanValue extends Base<Boolean> {
@@ -77,7 +77,7 @@ public final class ForgeConfigSpec {
 
   public static final class Builder {
     private final ArrayDeque<String> stack = new ArrayDeque<>();
-    Builder() {}
+    public Builder() {}
     public Builder push(String name) { stack.push(name); return this; }
     public Builder pop() { if (!stack.isEmpty()) stack.pop(); return this; }
     public Builder comment(String... ignored) { return this; }
@@ -93,5 +93,7 @@ public final class ForgeConfigSpec {
     public ForgeConfigSpec build() { return new ForgeConfigSpec(); }
   }
 
+  /** Forge autosaves on set(); kept as a public no-op for source compatibility. */
+  public void save() { saveAll(); }
   private ForgeConfigSpec() {}
 }

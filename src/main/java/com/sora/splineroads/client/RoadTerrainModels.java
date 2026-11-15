@@ -459,7 +459,7 @@ public final class RoadTerrainModels {
   private static void coverBelow(Map<Integer,List<BakedQuad>> covers,int cell,List<BakedQuad> quads){
     for(var q:quads){var v=q.getVertices().clone();boolean close=true;
       for(int i=0;i<4;i++){float y=Float.intBitsToFloat(v[i*8+1]);if(y<-.025||y>.025){close=false;break;}v[i*8+1]=Float.floatToRawIntBits(y+1);}
-      if(close)covers.computeIfAbsent(cell,key->new ArrayList<>()).add(new BakedQuad(v,q.getTintIndex(),q.getDirection(),q.getSprite(),q.isShade(),q.hasAmbientOcclusion()));
+      if(close)covers.computeIfAbsent(cell,key->new ArrayList<>()).add(new BakedQuad(v,q.getTintIndex(),q.getDirection(),q.getSprite(),q.isShade()));
     }
   }
   static boolean coverOnly(ModelData data){var cover=data.get(COVERS);var quads=data.get(QUADS);return cover!=null&&!cover.isEmpty()&&(quads==null||quads.isEmpty());}
@@ -628,7 +628,7 @@ public final class RoadTerrainModels {
         for(int vertex=0;vertex<4;vertex++)vertices[vertex*8+6]=RoadLighting.sample(face,points.get(vertex),lighting,true);
         // These are continuous road triangles, not the occluding proxy cube.
         // Proxy-cube AO makes the flat deck speckled and inset slopes black.
-        lit.add(new BakedQuad(vertices,quad.getTintIndex(),quad.getDirection(),quad.getSprite(),quad.isShade(),false));
+        lit.add(new BakedQuad(vertices,quad.getTintIndex(),quad.getDirection(),quad.getSprite(),quad.isShade()));
       }
       return input.derive().with(QUADS,List.copyOf(lit)).with(COVERS,data.get(COVERS)).build();
     }
@@ -681,7 +681,7 @@ public final class RoadTerrainModels {
     @Override public boolean useAmbientOcclusion(BlockState state,RenderType layer){return !originalVisible||super.useAmbientOcclusion(state,layer);}
   }
   static List<BakedQuad> capQuads(List<BakedQuad> quads,double cap){
-    return quads.stream().map(q->{int[] packed=q.getVertices().clone();for(int i=0;i<4;i++){int at=i*8+1;packed[at]=Float.floatToRawIntBits((float)(Float.intBitsToFloat(packed[at])*cap-(cap>=1?.002:0)));}return new BakedQuad(packed,q.getTintIndex(),q.getDirection(),q.getSprite(),q.isShade(),q.hasAmbientOcclusion());}).toList();
+    return quads.stream().map(q->{int[] packed=q.getVertices().clone();for(int i=0;i<4;i++){int at=i*8+1;packed[at]=Float.floatToRawIntBits((float)(Float.intBitsToFloat(packed[at])*cap-(cap>=1?.002:0)));}return new BakedQuad(packed,q.getTintIndex(),q.getDirection(),q.getSprite(),q.isShade());}).toList();
   }
   static List<BakedQuad> outlineQuads(List<BakedQuad> faces,List<List<RoadGeometry.V>> polygons,double cap,int visible){
     // Cube-corner AO is invalid for clipped triangle fans and creates dark sawteeth.
@@ -701,7 +701,7 @@ public final class RoadTerrainModels {
           packed[at]=Float.floatToRawIntBits((float)next.x());packed[at+1]=Float.floatToRawIntBits((float)next.y());packed[at+2]=Float.floatToRawIntBits((float)next.z());packed[at+7]=packedNormal;
           var d=next.sub(a);double u=(d.dot(b)*cc-d.dot(c)*bc)/det,t=(d.dot(c)*bb-d.dot(b)*bc)/det;
           for(int component=4;component<=5;component++){double first=Float.intBitsToFloat(source[component]);packed[at+component]=Float.floatToRawIntBits((float)(first+u*(Float.intBitsToFloat(source[8+component])-first)+t*(Float.intBitsToFloat(source[16+component])-first)));}
-        }out.add(new BakedQuad(packed,face.getTintIndex(),face.getDirection(),face.getSprite(),face.isShade(),false));
+        }out.add(new BakedQuad(packed,face.getTintIndex(),face.getDirection(),face.getSprite(),face.isShade()));
       }
     }return List.copyOf(out);
   }
@@ -718,7 +718,7 @@ public final class RoadTerrainModels {
         var d=next.sub(a);double u=(d.dot(b)*cc-d.dot(c)*bc)/det,t=(d.dot(c)*bb-d.dot(b)*bc)/det;
         for(int component=4;component<=5;component++){double first=Float.intBitsToFloat(source[component]);packed[at+component]=Float.floatToRawIntBits((float)(first+u*(Float.intBitsToFloat(source[8+component])-first)+t*(Float.intBitsToFloat(source[16+component])-first)));}
       }
-      out.add(new BakedQuad(packed,face.getTintIndex(),face.getDirection(),face.getSprite(),face.isShade(),face.hasAmbientOcclusion()));
+      out.add(new BakedQuad(packed,face.getTintIndex(),face.getDirection(),face.getSprite(),face.isShade()));
     }return List.copyOf(out);
   }
   private RoadTerrainModels(){}

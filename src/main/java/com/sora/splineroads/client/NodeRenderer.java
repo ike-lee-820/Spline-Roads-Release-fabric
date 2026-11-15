@@ -63,9 +63,7 @@ public final class NodeRenderer implements BlockEntityRenderer<NodeEntity> {
             1,
             1,
             light,
-            overlay,
-            net.minecraftforge.client.model.data.ModelData.EMPTY,
-            RenderType.solid());
+            overlay);
     pose.pushPose();
     pose.translate(.5 + n.offsetX, n.offsetY + .05, .5 + n.offsetZ);
     pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-((float) n.yaw)));

@@ -10,7 +10,7 @@ public final class SidewalkBlockQuads {
       for(int i=0;i<4;i++)if(Math.abs(Float.intBitsToFloat(original[i*8+1]))<1e-6){
         if(packed==null)packed=original.clone();packed[i*8+1]=Float.floatToRawIntBits(bottom.floatValue());
       }
-      out.add(packed==null?q:new BakedQuad(packed,q.getTintIndex(),q.getDirection(),q.getSprite(),q.isShade(),q.hasAmbientOcclusion()));
+      out.add(packed==null?q:new BakedQuad(packed,q.getTintIndex(),q.getDirection(),q.getSprite(),q.isShade()));
     }
     return List.copyOf(out);
   }
