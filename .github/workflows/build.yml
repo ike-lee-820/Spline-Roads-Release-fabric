@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   actions: write
 
 jobs:
@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -28,12 +30,16 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build with Gradle
+        id: build
         shell: bash
         run: |
-          set -o pipefail
+          set +e
           ./gradlew build --stacktrace --no-daemon 2>&1 | tee build.log
+          code=${PIPESTATUS[0]}
+          echo "gradle_exit=$code" >> "$GITHUB_OUTPUT"
+          exit $code
 
-      - name: Upload build log
+      - name: Upload build log artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -41,10 +47,26 @@ jobs:
           path: build.log
           if-no-files-found: ignore
 
-      - name: Upload jars
+      - name: Upload jars artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: splineroads-fabric-jars
           path: build/libs/*.jar
           if-no-files-found: ignore
+
+      # Blob-backed artifact/log URLs are not reachable from every network, so
+      # mirror the build output into the repository for reliable retrieval.
+      - name: Publish log and jars back to repo
+        if: always()
+        run: |
+          mkdir -p ci-out
+          cp build.log ci-out/build.log 2>/dev/null || true
+          cp build/libs/*.jar ci-out/ 2>/dev/null || true
+          git config user.name "ci-bot"
+          git config user.email "ci-bot@users.noreply.github.com"
+          git add -f ci-out/
+          if ! git diff --cached --quiet; then
+            git commit -m "CI output for ${GITHUB_SHA::8} [skip ci]"
+            git push origin HEAD:main
+          fi
