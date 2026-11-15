@@ -23,7 +23,7 @@ Please make sure to read and understand the following license:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 :remapping 54 mods from modImplementation (java-api)
 
-> Task :compileJava
+> Task :compileJava FAILED
 /home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/net/minecraftforge/client/model/BakedModelWrapper.java:9: error: cannot find symbol
 import net.minecraft.client.resources.model.ItemTransforms;
                                            ^
@@ -42,8 +42,6 @@ import net.minecraft.client.resources.model.ItemTransforms;
   symbol:   class ItemTransforms
   location: package net.minecraft.client.resources.model
 3 errors
-
-> Task :compileJava FAILED
 
 FAILURE: Build failed with an exception.
 
@@ -245,5 +243,5 @@ Caused by: org.gradle.api.internal.tasks.compile.CompilationFailedException: Com
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
 
 
-BUILD FAILED in 57s
+BUILD FAILED in 46s
 1 actionable task: 1 executed
