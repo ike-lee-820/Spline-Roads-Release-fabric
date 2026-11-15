@@ -26,7 +26,7 @@ public final class ForgeBakedModels {
     public boolean usesBlockLight() { return delegate.usesBlockLight(); }
     public boolean isCustomRenderer() { return delegate.isCustomRenderer(); }
     public TextureAtlasSprite getParticleIcon() { return delegate.getParticleIcon(); }
-    public net.minecraft.client.resources.model.ItemTransforms getTransforms() {
+    public net.minecraft.client.renderer.block.model.ItemTransforms getTransforms() {
       return delegate.getTransforms();
     }
     public net.minecraft.client.renderer.block.model.ItemOverrides getOverrides() {
