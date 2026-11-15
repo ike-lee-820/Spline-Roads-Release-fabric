@@ -1,3 +1,5 @@
+Downloading https://services.gradle.org/distributions/gradle-8.6-bin.zip
+............10%.............20%............30%.............40%.............50%............60%.............70%.............80%............90%.............100%
 
 Welcome to Gradle 8.6!
 
@@ -13,16 +15,35 @@ Daemon will be stopped at the end of the build
 
 > Configure project :
 Fabric Loom: 1.6.12
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Using of the official minecraft mappings is at your own risk!
+Please make sure to read and understand the following license:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# (c) 2020 Microsoft Corporation. These mappings are provided "as-is" and you bear the risk of using them. You may copy and use the mappings for development purposes, but you may not redistribute the mappings complete and unmodified. Microsoft makes no warranties, express or implied, with respect to the mappings provided here.  Use and modification of this document or the source code (in any form) of Minecraft: Java Edition is governed by the Minecraft End User License Agreement available at https://account.mojang.com/documents/minecraft_eula.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 :remapping 54 mods from modImplementation (java-api)
 
+> Task :compileStubJava
+> Task :processStubResources NO-SOURCE
+> Task :stubClasses
+
 > Task :compileJava
-/home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/fabric/mixin/MtrDataMixin.java:10: error: Mixin target org.mtr.core.data.Data could not be found
+/home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/fabric/mixin/MtrDataMixin.java:10: warning: Mixin target org.mtr.core.data.Data is public and should be specified in value
 @Mixin(targets = "org.mtr.core.data.Data", remap = false)
 ^
-/home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/fabric/mixin/MtrSimulatorMixin.java:10: error: Mixin target org.mtr.core.simulation.Simulator could not be found
+/home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/fabric/mixin/MtrSimulatorMixin.java:10: warning: Mixin target org.mtr.core.simulation.Simulator is public and should be specified in value
 @Mixin(targets = "org.mtr.core.simulation.Simulator", remap = false)
 ^
-2 errors
+/home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/compat/mtr/MtrReflection.java:150: error: incompatible types: Method cannot be converted to Field
+    return railObject != null && get(railMode, railObject) == train
+                                     ^
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: /home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/compat/mtr/MtrReflection.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+1 error
+2 warnings
 
 > Task :compileJava FAILED
 
@@ -226,5 +247,5 @@ Caused by: org.gradle.api.internal.tasks.compile.CompilationFailedException: Com
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
 
 
-BUILD FAILED in 13s
-1 actionable task: 1 executed
+BUILD FAILED in 57s
+2 actionable tasks: 2 executed
