@@ -1,0 +1,50 @@
+plugins {
+    id 'fabric-loom' version '1.6-SNAPSHOT'
+    id 'java'
+    id 'maven-publish'
+}
+
+group = 'com.sora.splineroads'
+version = '2.1.0+fabric'
+base { archivesName = 'splineroads-fabric' }
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+    withSourcesJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+}
+
+repositories {
+    maven { name = 'Fabric'; url = 'https://maven.fabricmc.net/' }
+    mavenCentral()
+}
+
+dependencies {
+    minecraft 'com.mojang:minecraft:1.20.1'
+    // Mojang official mappings keep every net.minecraft name identical to the
+    // Forge 1.20.1 sources, so the 55k-line logic layer needs no renaming.
+    mappings loom.officialMojangMappings()
+    modImplementation 'net.fabricmc:fabric-loader:0.15.11'
+    modImplementation 'net.fabricmc.fabric-api:fabric-api:0.92.2+1.20.1'
+
+    // MTR 4.0.5 is Forge-only; the compat package is an inert stub in this port.
+    // To restore the optional integration, add the correct jar as compileOnly.
+}
+
+loom {
+    // Access widener is intentionally left disabled: no widener entry is needed
+    // for the current source. See MIGRATION.md if a build reports access errors.
+    // accessWidenerPath = file('src/main/resources/splineroads.accesswidener')
+}
+
+tasks.named('jar', Jar) {
+    from('LICENSE') { into 'META-INF'; rename { 'LICENSE.txt' } }
+    from('THIRD_PARTY_NOTICES.md') { into 'META-INF' }
+    from('THIRD_PARTY_LICENSES') { into 'META-INF/licenses' }
+    manifest { attributes 'Implementation-Version': project.version }
+}
