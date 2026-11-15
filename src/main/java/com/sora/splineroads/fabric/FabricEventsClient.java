@@ -5,6 +5,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.Camera;
@@ -26,6 +27,11 @@ import org.joml.Matrix4f;
 /** Client-side event mapping. Arguments are extracted reflectively for resilience. */
 public final class FabricEventsClient {
   public static void register() {
+    // Fabric's core-shader callback is the equivalent of Forge's
+    // RegisterShadersEvent: the resource provider is live and reloads are
+    // handled by GameRenderer instead of a one-off startup guess.
+    CoreShaderRegistrationCallback.EVENT.register(context ->
+        ForgeEventBus.post(new RegisterShadersEvent(context)));
     ClientTickEvents.END_CLIENT_TICK.register(client -> {
       ForgeEventBus.post(new TickEvent.ClientTickEvent(TickEvent.Phase.END));
       if (Minecraft.getInstance().level != null) ModelHook.applyIfNeeded();
@@ -63,7 +69,6 @@ public final class FabricEventsClient {
   }
 
   private static void startup() {
-    registerShaders();
     ModelHook.applyIfNeeded();
   }
 
@@ -102,18 +107,6 @@ public final class FabricEventsClient {
     return new RenderLevelStageEvent(stage, pose, camera, projection, frustum, delta);
   }
 
-  private static void registerShaders() {
-    try {
-      Minecraft mc = Minecraft.getInstance();
-      if (mc == null) return;
-      Object resources = FabricApiBridge.call(mc, "getResourceManager");
-      if (resources == null) return;
-      ForgeEventBus.post(new RegisterShadersEvent(resources));
-    } catch (Throwable failure) {
-      System.getLogger("SplineRoads/bridge").log(System.Logger.Level.WARNING,
-          "Shader registration unavailable", failure);
-    }
-  }
   /** Fallback so sign/toll visibility checks never NPE when the API omits a frustum. */
   private static final class VisibleFrustum extends Frustum {
     VisibleFrustum() { super(new Matrix4f(), new Matrix4f()); }

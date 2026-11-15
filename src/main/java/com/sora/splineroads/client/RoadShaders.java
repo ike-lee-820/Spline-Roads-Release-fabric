@@ -24,9 +24,9 @@ public final class RoadShaders {
     });
   }
   @SubscribeEvent public static void register(RegisterShadersEvent event)throws IOException{
-    event.registerShader(new ShaderInstance(event.getResourceProvider(),"road_world_solid",DefaultVertexFormat.NEW_ENTITY),s->worldSolid=s);
-    event.registerShader(new ShaderInstance(event.getResourceProvider(),"road_world_opaque",DefaultVertexFormat.NEW_ENTITY),s->worldOpaque=s);
-    event.registerShader(new ShaderInstance(event.getResourceProvider(),"road_world_asphalt",DefaultVertexFormat.NEW_ENTITY),s->worldAsphalt=s);
+    event.registerShader(new ResourceLocation(SplineRoads.ID,"road_world_solid"),DefaultVertexFormat.NEW_ENTITY,s->worldSolid=s);
+    event.registerShader(new ResourceLocation(SplineRoads.ID,"road_world_opaque"),DefaultVertexFormat.NEW_ENTITY,s->worldOpaque=s);
+    event.registerShader(new ResourceLocation(SplineRoads.ID,"road_world_asphalt"),DefaultVertexFormat.NEW_ENTITY,s->worldAsphalt=s);
   }
   public static ShaderInstance solid(){return worldSolid==null||ShaderPackState.current().active()?GameRenderer.getRendertypeEntityCutoutNoCullShader():worldSolid;}
   public static ShaderInstance opaque(ResourceLocation texture){if(!isOpaque(texture))return solid();return opaque(texture.getPath().equals("textures/road/asphalt.png"));}

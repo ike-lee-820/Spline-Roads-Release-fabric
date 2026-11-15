@@ -37,5 +37,8 @@
       "upstream_version": "2.1.0",
       "upstream_loader": "forge"
     }
+  },
+  "suggests": {
+    "mtr": ">=4.0.5"
   }
 }

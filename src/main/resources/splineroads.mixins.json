@@ -3,11 +3,16 @@
   "minVersion": "0.8",
   "package": "com.sora.splineroads.fabric.mixin",
   "compatibilityLevel": "JAVA_17",
-  "mixins": [],
+  "mixins": [
+    "ExplosionMixin",
+    "PlayerDataMixin",
+    "MtrSimulatorMixin",
+    "MtrDataMixin"
+  ],
   "client": [
     "MinecraftEventsMixin"
   ],
   "injectors": {
-    "defaultRequire": 0
+    "defaultRequire": 1
   }
 }

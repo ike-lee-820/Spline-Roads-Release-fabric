@@ -1,26 +1,28 @@
 package net.minecraftforge.fml;
 
 import java.util.Optional;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraftforge.fml.config.IConfigEvent;
 
-/** Fabric port: only the built-in mod is advertised; optional MTR stays absent. */
+/** Fabric port: reports real mods through Fabric Loader, including optional MTR. */
 public final class ModList {
   private static final ModList INSTANCE = new ModList();
-  private static final ModContainer SELF = new ModContainer();
-
   public static ModList get() { return INSTANCE; }
   public Optional<ModContainer> getModContainerById(String id) {
-    return "mtr".equals(id) ? Optional.empty() : Optional.of(SELF);
+    return FabricLoader.getInstance().getModContainer(id).map(ModContainer::new);
   }
-  public boolean isLoaded(String id) { return !"mtr".equals(id); }
+  public boolean isLoaded(String id) { return FabricLoader.getInstance().isModLoaded(id); }
 
   public static final class ModContainer {
-    private final ModInfo info = new ModInfo();
-    public ModInfo getModInfo() { return info; }
+    private final net.fabricmc.loader.api.ModContainer container;
+    private ModContainer(net.fabricmc.loader.api.ModContainer container) { this.container = container; }
+    public ModInfo getModInfo() { return new ModInfo(container); }
     public void dispatchConfigEvent(IConfigEvent event) { /* live config values need no re-dispatch */ }
   }
   public static final class ModInfo {
-    public Object getVersion() { return "2.1.0+fabric"; }
+    private final net.fabricmc.loader.api.ModContainer container;
+    private ModInfo(net.fabricmc.loader.api.ModContainer container) { this.container = container; }
+    public Object getVersion() { return container.getMetadata().getVersion().getFriendlyString(); }
   }
   private ModList() {}
 }
