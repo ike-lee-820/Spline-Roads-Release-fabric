@@ -147,7 +147,7 @@ final class MtrReflection {
   }
   String dimension(Object simulatorObject) { return String.valueOf(get(simDimension, simulatorObject)); }
   boolean trainRail(Object railObject) {
-    return railObject != null && get(railMode, railObject) == train
+    return railObject != null && call(railMode, railObject) == train
         && !flag(call(railRemote, railObject)) && flag(call(railValid, railObject));
   }
   String hexId(Object railObject) { return String.valueOf(call(railHexId, railObject)); }
