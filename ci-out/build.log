@@ -20,11 +20,11 @@ Fabric Loom: 1.6.12
 > Task :stubClasses
 
 > Task :compileJava
-/home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/fabric/mixin/RenderChunkMixin.java:17: warning: Mixin target net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk is public and should be specified in value
-@Mixin(targets = "net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk")
-^
 /home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/fabric/mixin/MtrDataMixin.java:10: warning: Mixin target org.mtr.core.data.Data is public and should be specified in value
 @Mixin(targets = "org.mtr.core.data.Data", remap = false)
+^
+/home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/fabric/mixin/RenderChunkMixin.java:17: warning: Mixin target net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk is public and should be specified in value
+@Mixin(targets = "net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk")
 ^
 /home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/fabric/mixin/MtrSimulatorMixin.java:10: warning: Mixin target org.mtr.core.simulation.Simulator is public and should be specified in value
 @Mixin(targets = "org.mtr.core.simulation.Simulator", remap = false)
@@ -50,5 +50,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :assemble
 > Task :build
 
-BUILD SUCCESSFUL in 38s
+BUILD SUCCESSFUL in 35s
 7 actionable tasks: 7 executed
