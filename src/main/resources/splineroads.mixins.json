@@ -10,7 +10,11 @@
     "MtrDataMixin"
   ],
   "client": [
-    "MinecraftEventsMixin"
+    "MinecraftEventsMixin",
+    "BlockRenderDispatcherMixin",
+    "RenderChunkMixin",
+    "ChunkRenderDispatcherMixin",
+    "RebuildTaskMixin"
   ],
   "injectors": {
     "defaultRequire": 1

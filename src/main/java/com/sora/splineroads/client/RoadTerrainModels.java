@@ -636,7 +636,9 @@ public final class RoadTerrainModels {
       return input.get(QUADS)==null&&input.get(COVERS)==null?input:input.derive().with(QUADS,List.of()).with(COVERS,List.of()).build();
     }
     @Override public List<BakedQuad> getQuads(BlockState state,Direction side,RandomSource random) {
-      return originalVisible?super.getQuads(state,side,random):List.of();
+      // Vanilla's chunk mesher only calls the three-argument overload. Route it
+      // through the ModelData-aware path so the per-cell road quads are emitted.
+      return getQuads(state,side,random,net.minecraftforge.client.model.data.ModelDataContext.current(),null);
     }
     @Override public List<BakedQuad> getQuads(BlockState state,Direction side,RandomSource random,ModelData data,RenderType layer) {
       List<BakedQuad> base=originalVisible?super.getQuads(state,side,random,data,layer):List.of();

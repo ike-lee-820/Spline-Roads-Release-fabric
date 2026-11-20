@@ -14,6 +14,7 @@ import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.ChunkRenderTypeSet;
 import net.minecraftforge.client.model.data.ModelData;
+import net.minecraftforge.client.model.data.ModelDataContext;
 
 /**
  * Fabric port of Forge's wrapper. The five-argument getQuads()/getRenderTypes()
@@ -27,7 +28,7 @@ public class BakedModelWrapper<T extends BakedModel> implements ForgeBakedModel 
   public BakedModelWrapper(T originalModel) { this.originalModel = originalModel; }
 
   public List<BakedQuad> getQuads(BlockState state, Direction side, RandomSource random) {
-    return getQuads(state, side, random, ModelData.EMPTY, null);
+    return getQuads(state, side, random, ModelDataContext.current(), null);
   }
   public boolean useAmbientOcclusion() { return originalModel.useAmbientOcclusion(); }
   public boolean isGui3d() { return originalModel.isGui3d(); }

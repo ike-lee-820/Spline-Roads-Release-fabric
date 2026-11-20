@@ -3,24 +3,25 @@
 ## 当前状态
 
 ✅ **编译已通过**：GitHub Actions（Ubuntu + Temurin JDK 17 + Fabric Loom 1.6）执行 `./gradlew build` 返回 `BUILD SUCCESSFUL`，产出 `splineroads-fabric-2.1.0+fabric.jar`（约 4.3 MB）与 sources jar。
-⚠️ **未做游戏内实测**：运行时行为请在测试世界验证。
+⚠️ **Mixin 为运行时织入**：CI 只验证编译与注解处理，注入是否命中需游戏内实测。
 
 ## 迁移策略
 
 1. **保持原版逻辑层基本不动**：Forge 1.20.1（ForgeGradle 6）与 Fabric Loom 均可使用 Mojang 官方映射（mojmap）。`build.gradle` 里 `mappings loom.officialMojangMappings()` 让 `net.minecraft.*` 的类名、方法名、字段名与 Forge 源码一致，385 个原版 Java 文件中绝大多数无需改动。
 2. **兼容层而非全量改写**：原版只有 30 个文件直接引用 Forge API。为避免改动 5.5 万行业务代码，新增 `src/main/java/net/minecraftforge/**` 下的自写适配类（**不是 Forge 的代码**），提供同名 API，由 `com.sora.splineroads.fabric` 下的入口与事件桥驱动。
-3. **Forge 对 vanilla 的 patch 需逐项消解**：Forge 给若干原版类「加了」方法或构造（`Entity.getPersistentData()`、`BakedQuad.hasAmbientOcclusion()`、`CreativeModeTab.builder()` 无参版等）。这些在 Fabric 上不存在，已按下表改写或由兼容层吸收。
+3. **Forge 对 vanilla 的 patch 逐项消解**：Forge 给若干原版类「加了」方法或构造。这些在 Fabric 上不存在，已按下表改写或由兼容层吸收。
+4. **Forge coremods → Mixin**：`coremods/*.js` 依赖 Forge 的 ASM 框架，改为等价的 Fabric Mixin（见下表「coremod 对照」）。
 
 ## 目录结构
 
 ```
 .github/workflows/build.yml                  CI：JDK17 + Loom，构建并回写日志/jar
 build.gradle / settings.gradle / gradle.properties   Fabric Loom 工程
+stubs/java/org/mtr/...                       MTR 可选 Mixin 的编译期占位（不进 jar）
 src/main/resources/fabric.mod.json          入口点、依赖、非官方声明
-src/main/resources/splineroads.mixins.json  客户端 mixin（setScreen / startUseItem）
-src/main/resources/splineroads.accesswidener 预留（当前未启用）
+src/main/resources/splineroads.mixins.json  Mixin 配置
 src/main/java/com/sora/splineroads/**       原版代码（少量适配改动）
-src/main/java/com/sora/splineroads/fabric/**  Fabric 入口、事件桥、区块跟踪、模型钩子
+src/main/java/com/sora/splineroads/fabric/**  Fabric 入口、事件桥、区块跟踪、模型钩子、Mixin
 src/main/java/net/minecraftforge/**          自写 Forge API 兼容层
 ci-out/                                     CI 自动回写的 build.log 与 jar
 ```
@@ -31,45 +32,56 @@ ci-out/                                     CI 自动回写的 build.log 与 jar
 
 | Forge 侧 | Fabric 侧实现 |
 | --- | --- |
-| `@Mod` / `@Mod.EventBusSubscriber` / `@SubscribeEvent` | 保留注解；`ForgeEventBus` 显式扫描 20 个订阅类并分发 |
+| `@Mod` / `@Mod.EventBusSubscriber` / `@SubscribeEvent` | 保留注解；`ForgeEventBus` 显式扫描订阅类并分发 |
 | `DeferredRegister` / `RegistryObject` | `Registry.register()` 立即注册；`RegistryObject.get()` 直接返回对象 |
 | `ForgeRegistries.BLOCKS/ITEMS/BLOCK_ENTITY_TYPES` | `BuiltInRegistries.*` |
 | `SimpleChannel` / `NetworkRegistry` / `PacketDistributor` | 反射调用 `ServerPlayNetworking` / `ClientPlayNetworking` 自定义通道 |
-| `ForgeConfigSpec` | Gson 读写 `config/splineroads-fabric.json`；`Builder` 公开构造、`SPEC.save()` 空操作（set 即落盘） |
-| `Dist` / `DistExecutor` / `ModList` | `FabricLoader.getEnvironmentType()` / 固定返回本 mod 存在、MTR 不存在 |
-| `MinecraftForge.EVENT_BUS.post` | `ForgeEventBus.post`，返回是否被取消 |
-| `RenderLevelStageEvent` | `WorldRenderEvents.AFTER_ENTITIES`（AFTER_BLOCK_ENTITIES）与 `END`（AFTER_TRANSLUCENT_BLOCKS） |
+| `ForgeConfigSpec` | Gson 读写 `config/splineroads-fabric.json`；`Builder` 公开构造、`SPEC.save()` 空操作 |
+| `ModList` | 真实 `FabricLoader.getModContainer(...)`，MTR 可选可见 |
+| `Dist` / `DistExecutor` | `FabricLoader.getEnvironmentType()` |
+| `MinecraftForge.EVENT_BUS.post` | `ForgeEventBus.post` |
+| `RenderLevelStageEvent` | `WorldRenderEvents.AFTER_ENTITIES` 与 `END` |
 | `TickEvent.*` | `ServerTickEvents` / `ClientTickEvents` / `WorldRenderEvents.START` |
 | `RegisterCommandsEvent` / `RegisterClientCommandsEvent` | `CommandRegistrationCallback` / `ClientCommandRegistrationCallback` |
-| `RegisterShadersEvent` | 客户端启动/资源重载后由事件桥触发；`ShaderInstance` 用 vanilla 的 `(ResourceProvider, String, VertexFormat)` 构造，provider 把 `minecraft:shaders/core/road_world_*.json` 重定向到本 mod 命名空间 |
+| `RegisterShadersEvent` | `CoreShaderRegistrationCallback`（`RegistrationContext.register(id, format, callback)`），三个 shader 随 vanilla shader 重载 |
 | `ModelEvent.ModifyBakingResult` | `ModelHook` 反射定位 `ModelBakery` 的 baked model map 并 `replaceAll` |
-| `EntityRenderersEvent` / `RegisterColorHandlersEvent` / `RegisterKeyMappingsEvent` | 对应 Fabric 注册表（反射调用） |
+| `EntityRenderersEvent` / 颜色 / 按键映射 | 对应 Fabric 注册表（反射调用） |
 | `BlockEvent.BreakEvent` | `PlayerBlockBreakEvents.BEFORE` |
 | `PlayerInteractEvent.RightClickBlock` | `UseBlockCallback.EVENT` |
 | `ChunkWatchEvent.Watch/UnWatch` | `ChunkWatchTracker` 每 5 tick 依据玩家视距合成 |
 | `ChunkEvent.Load/Unload` | `ServerChunkEvents` / `ClientChunkEvents` |
-| `PlayerEvent.PlayerLoggedOutEvent` | `ServerPlayConnectionEvents.DISCONNECT` |
-| `ServerStopping/StoppedEvent` | `ServerLifecycleEvents` |
-| `ModelData` / `ModelProperty` / `BakedModelWrapper` / `ChunkRenderTypeSet` | 兼容层内的独立实现；`ForgeBakedModel` 接口承载 Forge 扩展方法，并从 `BlockEntity.getModelData()` 反射取值 |
-| `BlockSnapshot` / `BlockEvent.EntityPlaceEvent` | 兼容层内的轻量实现，用于区域保护探测 |
-| `ModConfigEvent` / `IConfigEvent` / `FMLClientSetupEvent` | 兼容层内的一次性事件 |
+| `ExplosionEvent.Detonate` | `ExplosionMixin` 在 `Explosion.finalizeExplosion` HEAD 发布事件（列表为实时引用，`removeIf` 生效） |
+| `Entity.getPersistentData()` | `PersistentData` + `PlayerDataMixin` 读写玩家 NBT（`SplineRoadsPlanner`） |
+| `ModelData` / `BakedModelWrapper` / `ChunkRenderTypeSet` | 兼容层内实现；`ModelDataContext` 为 vanilla 三参数 `getQuads` 补上逐位置数据 |
+| `BlockSnapshot` / `BlockEvent.EntityPlaceEvent` | 兼容层内轻量实现，用于区域保护探测 |
 
 ### Forge 注入到 vanilla 类的 API → 本次改写
 
 | 原版写法 | 1.20.1 vanilla / 本移植 |
 | --- | --- |
-| `player.getPersistentData()`（Forge 注入 `Entity`） | `PersistentData.of(player)`，进程内 `Map<UUID, CompoundTag>` |
-| `state.getSoundType(level,pos,player)` | `state.getSoundType()`（无参） |
-| `BlockEntity.getRenderBoundingBox()` `@Override` | 去掉 `@Override`，保留普通方法 |
-| `BakedQuad.hasAmbientOcclusion()` | 不存在；6 参构造的第 6 个布尔参数统一删除，5 参构造保留 `isShade()` |
-| `new BakedQuad(..., boolean, boolean)` | `new BakedQuad(..., boolean)`（5 参） |
+| `player.getPersistentData()` | `PersistentData.of(player)` |
+| `state.getSoundType(level,pos,player)` | `state.getSoundType()` |
+| `BlockEntity.getRenderBoundingBox()` `@Override` | 去掉 `@Override` |
+| `BakedQuad.hasAmbientOcclusion()` / 6 参构造 | 删除第 6 个布尔参数，5 参构造保留 `isShade()` |
 | `ModelBlockRenderer.renderModel(..., ModelData, RenderType)`（11 参） | vanilla 9 参版本 |
 | `CreativeModeTab.builder()`（无参） | `CreativeModeTab.builder(Row.TOP, 0)` |
-| `new ShaderInstance(provider, ResourceLocation, format)` | `new ShaderInstance(provider, "road_world_*", format)` + provider 命名空间重定向 |
-| `ResourceLocation.fromNamespaceAndPath(...)` | `new ResourceLocation(namespace, path)` |
-| `ForgeConfigSpec.Builder()` 包私有构造 | 改为 `public` |
-| `SPEC.save()` | 兼容层提供 public `save()`（set 已自动落盘） |
-| `BlockEntity.getModelData()` / `requestModelDataUpdate()` | 去掉 Forge 专有调用；`sendBlockUpdated` 触发区块重绘 |
+| `new ShaderInstance(provider, ResourceLocation, format)` | `CoreShaderRegistrationCallback` + 命名空间资源路径 |
+| `ForgeConfigSpec.Builder()` 包私有构造 / `SPEC.save()` | 改为 public / 提供 public `save()` |
+
+### Forge coremods → Mixin 对照
+
+| Forge `coremods/*.js` | Fabric 替代 |
+| --- | --- |
+| `mtr_snapshot.js` → `RenderRails.lambda$isHoldingRailRelated$12` | `MtrRailAccess.railbedItem()` 由 `MtrReflection` 反射实现；工具判定走 `trainNode()` |
+| `mtr_snapshot.js` → `BlockNode` 碰撞形状 / `dynamicBounds` | `Mtr4Adapter.nodeShape()` 反射合并 `VoxelShape` |
+| `mtr_snapshot.js` → `Simulator.tick` / `Data.sync` | `MtrSimulatorMixin` / `MtrDataMixin`（`require = 0`，MTR 缺席时静默跳过） |
+| `terrain_upload.js` → `RenderChunk` 加 `RoadChunkBuffers` | `RenderChunkMixin` 实现接口并暴露 `buffers` 字段 |
+| `terrain_upload.js` → `ChunkRenderDispatcher` 加 `RoadChunkUploads` | `ChunkRenderDispatcherMixin` 实现接口并暴露 `toUpload` 队列 |
+| `terrain_upload.js` → `RebuildTask.doTask` 的 begin/end/complete | `RebuildTaskMixin`（`require = 0`，按类型反射查字段，不依赖 mojmap 字段名） |
+| `terrain_upload.js` → `lambda$doTask$0/1` 的上传与提交 | `RebuildTaskMixin` 的 `uploadChunkLayer` / `AtomicReference.set` 重定向 |
+| Embeddium/Sodium 相关注入 | `RoadEmbeddiumHandoff` 已保留反射桥；Sodium 目标为可选增强，未强制注入 |
+
+`MTR 4.0.5` 的 Fabric 版类名与 Forge 版一致，因此原版 `Mtr4Adapter` / `MtrNearby` 的算法用反射重写，不链接任何 `org.mtr.*` 编译期类型（避免硬依赖）。`stubs/java` 里的两个空类仅供 Mixin 注解处理器解析可选 target，**不会**被打进 jar。
 
 ## 构建与 CI
 
@@ -79,15 +91,12 @@ ci-out/                                     CI 自动回写的 build.log 与 jar
 
 `.github/workflows/build.yml` 在 push 到 `main` 或手动 `workflow_dispatch` 时运行：checkout → setup-java 17 → `chmod +x gradlew` → `./gradlew build --stacktrace --no-daemon`，并把日志与 `build/libs/*.jar` 上传为 Actions artifacts，同时回写到仓库 `ci-out/`（回写 commit 带 `[skip ci]`，不会递归触发）。
 
-## 已知降级 / 未完成
+## 仍需运行时验证的部分
 
-- **MTR 铁路路基联动**：关闭（Forge 专属依赖）。
-- **Forge coremods**（`terrain_upload.js` / `mtr_snapshot.js`）：未移植。原版针对 `ChunkRenderDispatcher$RenderChunk$RebuildTask` 的 ASM 上传钩子在 Fabric 侧没有等价注入，因此 **TERRAIN 后端不完整**；默认 AUTO 在无 shader pack 时使用 VBO 后端。若需完整 TERRAIN 支持，需补一个针对 Fabric 区块重建的 mixin。
-- **ModelData 传递**：vanilla 的 `BakedModel.getQuads(state, side, random)` 不携带 `ModelData`。兼容层在 `getModelData()` 阶段通过反射读取 `BlockEntity.getModelData()`，因此 `RoadFillEntity` 的材质/高度数据仍可进入包装模型；但 vanilla 区块重建不会为每个位置调用 `getModelData()`，与 `RoadTerrainHandoff` 相关的逐 cell 路面四边形（TERRAIN 后端）仍不完整，VBO 后端不受影响。
-- **爆炸保护**：`ExplosionEvent.Detonate` 未接入，道路方块可能被爆炸影响。
-- **规划器设置持久化**：`PersistentData` 只存活于服务端进程，重启后 `SRPlannerRadius` / `SRPlannerUndo` / `SRPlannerCacheSeconds` 回到默认值。
-- **Screen / 输入 mixin**：`require = 0`，若目标方法名与本地映射不符则静默跳过，地图编辑器「关闭子界面返回地图」的行为会降级。
-- **自定义 shader**：`RegisterShadersEvent` 在客户端启动/资源重载时尝试注册 3 个 shader；若资源尚不可用则记录错误并回退到 vanilla `rendertypeEntityCutoutNoCull` shader，不影响 VBO 渲染。
+- **上传收据与 Embeddium**：`RebuildTaskMixin` 中与 lambda 相关的注入设为 `require = 0`（不同映射下 synthetic 方法名可能变化）。即使全部跳过，`uploadVanilla` / `commitVanilla` 会退回原版行为，VBO 后端仍可工作；但 staged buffer 与精确剔除会降级。
+- **TERRAIN / VBO 双绘**：逐 cell ModelData 已恢复，若客户端配置把后端设为 TERRAIN，请确认 `RoadRenderer` 没有同时绘制 VBO 表面。
+- **自定义 shader**：`CoreShaderRegistrationCallback` 在 1.20.1 的某些 Fabric API 版本会重复触发（约 60 次/重载）；注册本身幂等，但日志可能出现重复警告。
+- **Screen / 输入 Mixin**：`require = 1`，若目标方法名与本地映射不符，启动会明确报错而不是静默跳过。
 
 ## 许可
 
