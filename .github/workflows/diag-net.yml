@@ -17,8 +17,10 @@ jobs:
         run: |
           OUT=/tmp/net_diag.txt
           : > "$OUT"
+          FOUND=0
           while IFS= read -r j; do
             if unzip -l "$j" 2>/dev/null | grep -q 'net/fabricmc/fabric/api/networking/v1/ServerPlayNetworking.class'; then
+              FOUND=1
               echo "=== JAR $j ===" >> "$OUT"
               for C in \
                 'net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking' \
@@ -33,11 +35,28 @@ jobs:
               break
             fi
           done < <(find . "$HOME/.gradle" -name '*.jar' 2>/dev/null)
+          echo "FOUND=$FOUND" >> "$OUT"
           cat "$OUT"
-          mkdir -p ci-out
-          cp "$OUT" ci-out/net-signatures.txt
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-          git add ci-out/net-signatures.txt
-          git commit -m "Networking signature diagnostic [skip ci]" || true
-          git push
+          python3 - <<'PY'
+          import base64,json,urllib.request,os
+          data=open('/tmp/net_diag.txt','rb').read()
+          body=json.dumps({"message":"Networking signature diagnostic [skip ci]",
+                           "content":base64.b64encode(data).decode(),
+                           "branch":"main"}).encode()
+          url=f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/contents/ci-out/net-signatures.txt"
+          tok=os.environ['GH_TOKEN']
+          # try update if exists
+          try:
+              req=urllib.request.Request(url,headers={'Authorization':'Bearer '+tok,'Accept':'application/vnd.github+json','User-Agent':'sr'})
+              cur=json.loads(urllib.request.urlopen(req,timeout=60).read())
+              body=json.dumps({"message":"Networking signature diagnostic [skip ci]",
+                               "content":base64.b64encode(data).decode(),
+                               "branch":"main","sha":cur['sha']}).encode()
+          except Exception as e: print('new file',e)
+          req=urllib.request.Request(url,data=body,method='PUT',
+              headers={'Authorization':'Bearer '+tok,'Accept':'application/vnd.github+json',
+                       'User-Agent':'sr','Content-Type':'application/json'})
+          print('PUT',urllib.request.urlopen(req,timeout=90).status)
+          PY
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
