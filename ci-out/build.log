@@ -29,23 +29,11 @@ Fabric Loom: 1.6.12
 /home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/fabric/mixin/MtrSimulatorMixin.java:10: warning: Mixin target org.mtr.core.simulation.Simulator is public and should be specified in value
 @Mixin(targets = "org.mtr.core.simulation.Simulator", remap = false)
 ^
-/home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/fabric/mixin/RebuildTaskMixin.java:67: warning: Cannot find target method "lambda$doTask$0(Ljava/util/List;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/RenderType;Lcom/mojang/blaze3d/vertex/BufferBuilder$RenderedBuffer;)V" for @Inject.method="lambda$doTask$0(Ljava/util/List;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/RenderType;Lcom/mojang/blaze3d/vertex/BufferBuilder$RenderedBuffer;)V" in net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask
-  @Inject(method = UPLOAD_LAMBDA, at = @At("HEAD"), require = 0)
-  ^
-/home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/fabric/mixin/RebuildTaskMixin.java:84: warning: Cannot find target method "lambda$doTask$1(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Ljava/util/List;Ljava/lang/Throwable;)Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkTaskResult;" for @Inject.method="lambda$doTask$1(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Ljava/util/List;Ljava/lang/Throwable;)Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkTaskResult;" in net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask
-  @Inject(method = FINISH_LAMBDA, at = @At("HEAD"), require = 0)
-  ^
-/home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/fabric/mixin/RebuildTaskMixin.java:73: warning: Cannot find target method "lambda$doTask$0(Ljava/util/List;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/RenderType;Lcom/mojang/blaze3d/vertex/BufferBuilder$RenderedBuffer;)V" for @Redirect.method="lambda$doTask$0(Ljava/util/List;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/RenderType;Lcom/mojang/blaze3d/vertex/BufferBuilder$RenderedBuffer;)V" in net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask
-  @Redirect(method = UPLOAD_LAMBDA, require = 0,
-  ^
-/home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/fabric/mixin/RebuildTaskMixin.java:91: warning: Cannot find target method "lambda$doTask$1(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Ljava/util/List;Ljava/lang/Throwable;)Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkTaskResult;" for @Redirect.method="lambda$doTask$1(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Ljava/util/List;Ljava/lang/Throwable;)Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkTaskResult;" in net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask
-  @Redirect(method = FINISH_LAMBDA, require = 0,
-  ^
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 Note: /home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/compat/mtr/MtrReflection.java uses unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
-7 warnings
+3 warnings
 
 > Task :processResources
 > Task :classes
@@ -62,5 +50,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :assemble
 > Task :build
 
-BUILD SUCCESSFUL in 31s
+BUILD SUCCESSFUL in 38s
 7 actionable tasks: 7 executed
