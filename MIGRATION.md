@@ -78,7 +78,7 @@ ci-out/                                     CI 自动回写的 build.log 与 jar
 | `terrain_upload.js` → `RenderChunk` 加 `RoadChunkBuffers` | `RenderChunkMixin` 实现接口并暴露 `buffers` 字段 |
 | `terrain_upload.js` → `ChunkRenderDispatcher` 加 `RoadChunkUploads` | `ChunkRenderDispatcherMixin` 实现接口并暴露 `toUpload` 队列 |
 | `terrain_upload.js` → `RebuildTask.doTask` 的 begin/end/complete | `RebuildTaskMixin`（`require = 0`，按类型反射查字段，不依赖 mojmap 字段名） |
-| `terrain_upload.js` → `lambda$doTask$0/1` 的上传与提交 | `RebuildTaskMixin` 的 `uploadChunkLayer` / `AtomicReference.set` 重定向 |
+| `terrain_upload.js` → `lambda$doTask$0/1` 的上传与提交 | `RebuildTaskMixin` 的 `uploadChunkLayer` / `AtomicReference.set` 重定向；Fabric Loom 下这两个合成方法实际名为 `method_22788` / `method_23619`（已用 javap 核实），注入为 `require = 1` |
 | Embeddium/Sodium 相关注入 | `RoadEmbeddiumHandoff` 已保留反射桥；Sodium 目标为可选增强，未强制注入 |
 
 `MTR 4.0.5` 的 Fabric 版类名与 Forge 版一致，因此原版 `Mtr4Adapter` / `MtrNearby` 的算法用反射重写，不链接任何 `org.mtr.*` 编译期类型（避免硬依赖）。`stubs/java` 里的两个空类仅供 Mixin 注解处理器解析可选 target，**不会**被打进 jar。
@@ -93,7 +93,7 @@ ci-out/                                     CI 自动回写的 build.log 与 jar
 
 ## 仍需运行时验证的部分
 
-- **上传收据与 Embeddium**：`RebuildTaskMixin` 中与 lambda 相关的注入设为 `require = 0`（不同映射下 synthetic 方法名可能变化）。即使全部跳过，`uploadVanilla` / `commitVanilla` 会退回原版行为，VBO 后端仍可工作；但 staged buffer 与精确剔除会降级。
+- **上传收据与 Embeddium**：`RebuildTaskMixin` 的 7 个注入目标均已在编译期由 Mixin AP 校验通过（`require = 1`）。staged buffer 与精确剔除仍需游戏内验证；`RoadEmbeddiumHandoff` 的 Sodium 反射桥为可选增强，不强制注入。
 - **TERRAIN / VBO 双绘**：逐 cell ModelData 已恢复，若客户端配置把后端设为 TERRAIN，请确认 `RoadRenderer` 没有同时绘制 VBO 表面。
 - **自定义 shader**：`CoreShaderRegistrationCallback` 在 1.20.1 的某些 Fabric API 版本会重复触发（约 60 次/重载）；注册本身幂等，但日志可能出现重复警告。
 - **Screen / 输入 Mixin**：`require = 1`，若目标方法名与本地映射不符，启动会明确报错而不是静默跳过。

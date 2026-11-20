@@ -21,22 +21,24 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Fabric equivalent of Forge's terrain_upload.js vanilla transformer.
- * All lambda-targeted injects are optional (require = 0): if a future mapping
- * renames the synthetic methods the game still starts and the VBO renderer
- * keeps working. Field lookups are by type so mojmap / intermediary field
- * names do not matter.
+ * Targets are the verified Fabric Loom / intermediary names (require = 1), so
+ * a mapping change fails loudly instead of silently dropping the upload
+ * receipts. Field lookups are by type so mojmap / intermediary field names do
+ * not matter.
  */
 @Mixin(targets = "net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask")
 public abstract class RebuildTaskMixin {
   private static final String DO_TASK =
       "doTask(Lnet/minecraft/client/renderer/ChunkBufferBuilderPack;)Ljava/util/concurrent/CompletableFuture;";
+  // Fabric Loom / intermediary names for the two synthetic lambdas in
+  // ChunkRenderDispatcher$RenderChunk$RebuildTask (verified via javap on 1.20.1).
   private static final String UPLOAD_LAMBDA =
-      "lambda$doTask$0(Ljava/util/List;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/RenderType;Lcom/mojang/blaze3d/vertex/BufferBuilder$RenderedBuffer;)V";
+      "method_22788(Ljava/util/List;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/RenderType;Lcom/mojang/blaze3d/vertex/BufferBuilder$RenderedBuffer;)V";
   private static final String FINISH_LAMBDA =
-      "lambda$doTask$1(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Ljava/util/List;Ljava/lang/Throwable;)Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkTaskResult;";
+      "method_23619(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Ljava/util/List;Ljava/lang/Throwable;)Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkTaskResult;";
   private static final ThreadLocal<RenderType> LAYER = new ThreadLocal<>();
 
-  @Inject(method = DO_TASK, at = @At("HEAD"), require = 0)
+  @Inject(method = DO_TASK, at = @At("HEAD"), require = 1)
   private void sr$begin(ChunkBufferBuilderPack pack, CallbackInfo info) {
     try {
       Object chunk = FabricApiBridge.field(this, ChunkRenderDispatcher.RenderChunk.class);
@@ -48,14 +50,14 @@ public abstract class RebuildTaskMixin {
     } catch (Throwable ignored) { }
   }
 
-  @Inject(method = DO_TASK, at = @At("RETURN"), require = 0)
+  @Inject(method = DO_TASK, at = @At("RETURN"), require = 1)
   @SuppressWarnings("rawtypes")
   private void sr$end(ChunkBufferBuilderPack pack, CallbackInfoReturnable<CompletableFuture> info) {
     try { RoadTerrainHandoff.endVanilla(info.getReturnValue(), this); }
     catch (Throwable ignored) { }
   }
 
-  @Redirect(method = DO_TASK, require = 0,
+  @Redirect(method = DO_TASK, require = 1,
       at = @At(value = "INVOKE",
           target = "Ljava/util/concurrent/CompletableFuture;handle(Ljava/util/function/BiFunction;)Ljava/util/concurrent/CompletableFuture;"))
   @SuppressWarnings({"rawtypes", "unchecked"})
@@ -64,13 +66,13 @@ public abstract class RebuildTaskMixin {
     catch (Throwable ignored) { return future.handle(handler); }
   }
 
-  @Inject(method = UPLOAD_LAMBDA, at = @At("HEAD"), require = 0)
+  @Inject(method = UPLOAD_LAMBDA, at = @At("HEAD"), require = 1)
   private void sr$layer(List<?> list, ChunkRenderDispatcher.CompiledChunk compiled,
                         RenderType layer, BufferBuilder.RenderedBuffer buffer, CallbackInfo info) {
     LAYER.set(layer);
   }
 
-  @Redirect(method = UPLOAD_LAMBDA, require = 0,
+  @Redirect(method = UPLOAD_LAMBDA, require = 1,
       at = @At(value = "INVOKE",
           target = "Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher;uploadChunkLayer(Lcom/mojang/blaze3d/vertex/BufferBuilder$RenderedBuffer;Lcom/mojang/blaze3d/vertex/VertexBuffer;)Ljava/util/concurrent/CompletableFuture;"))
   private CompletableFuture<Void> sr$upload(ChunkRenderDispatcher dispatcher,
@@ -81,14 +83,14 @@ public abstract class RebuildTaskMixin {
     catch (Throwable ignored) { return dispatcher.uploadChunkLayer(data, live); }
   }
 
-  @Inject(method = FINISH_LAMBDA, at = @At("HEAD"), require = 0)
+  @Inject(method = FINISH_LAMBDA, at = @At("HEAD"), require = 1)
   private void sr$beforeCommit(ChunkRenderDispatcher.CompiledChunk compiled, List<?> list,
                                Throwable failure, CallbackInfo info) {
     try { RoadTerrainHandoff.beforeCommit(this, failure); }
     catch (Throwable ignored) { }
   }
 
-  @Redirect(method = FINISH_LAMBDA, require = 0,
+  @Redirect(method = FINISH_LAMBDA, require = 1,
       at = @At(value = "INVOKE",
           target = "Ljava/util/concurrent/atomic/AtomicReference;set(Ljava/lang/Object;)V"))
   private void sr$commit(AtomicReference<Object> reference, Object compiled) {
