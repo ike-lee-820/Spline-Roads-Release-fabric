@@ -1,0 +1,43 @@
+name: Diagnose Fabric networking signatures
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: chmod +x gradlew && ./gradlew compileJava --no-daemon --console=plain >/dev/null 2>&1 || true
+      - name: javap networking API
+        run: |
+          OUT=/tmp/net_diag.txt
+          : > "$OUT"
+          while IFS= read -r j; do
+            if unzip -l "$j" 2>/dev/null | grep -q 'net/fabricmc/fabric/api/networking/v1/ServerPlayNetworking.class'; then
+              echo "=== JAR $j ===" >> "$OUT"
+              for C in \
+                'net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking' \
+                'net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking$PlayChannelHandler' \
+                'net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking' \
+                'net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking$PlayChannelHandler' \
+                'net.fabricmc.fabric.api.networking.v1.PacketSender' \
+                'net.fabricmc.fabric.api.event.player.UseBlockCallback' ; do
+                echo "--- $C ---" >> "$OUT"
+                javap -p -classpath "$j" "$C" >> "$OUT" 2>&1
+              done
+              break
+            fi
+          done < <(find . "$HOME/.gradle" -name '*.jar' 2>/dev/null)
+          cat "$OUT"
+          mkdir -p ci-out
+          cp "$OUT" ci-out/net-signatures.txt
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add ci-out/net-signatures.txt
+          git commit -m "Networking signature diagnostic [skip ci]" || true
+          git push
