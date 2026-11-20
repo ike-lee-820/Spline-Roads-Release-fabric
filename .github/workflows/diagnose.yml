@@ -1,0 +1,29 @@
+name: Diagnose Mixin lambda names
+on:
+  workflow_dispatch:
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Prepare remapped Minecraft jar
+        run: chmod +x gradlew && ./gradlew compileJava --no-daemon --console=plain >/dev/null 2>&1 || true
+      - name: Print chunk render class members
+        run: |
+          JAR=""
+          while IFS= read -r j; do
+            if unzip -l "$j" 2>/dev/null | grep -q 'ChunkRenderDispatcher\$RenderChunk\$RebuildTask.class'; then JAR="$j"; break; fi
+          done < <(find . "$HOME/.gradle" -name '*.jar' 2>/dev/null)
+          echo "SR_DIAG_JAR=$JAR"
+          if [ -n "$JAR" ]; then
+            echo "=== RebuildTask ==="
+            javap -p -classpath "$JAR" 'net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask' | grep -E 'lambda|doTask|upload|CompiledChunk|ChunkTaskResult|Atomic' || true
+            echo "=== RenderChunk ==="
+            javap -p -classpath "$JAR" 'net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk' | grep -E 'reset|buffers|Map|setDirty' || true
+            echo "=== Dispatcher ==="
+            javap -p -classpath "$JAR" 'net.minecraft.client.renderer.chunk.ChunkRenderDispatcher' | grep -E 'toUpload|uploadAllPendingUploads|dispose|uploadChunkLayer|Queue' || true
+          fi
