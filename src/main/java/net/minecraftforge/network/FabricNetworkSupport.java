@@ -1,97 +1,71 @@
 package net.minecraftforge.network;
 
-import java.lang.reflect.*;
-import java.util.function.BiConsumer;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
- * Fabric port: all Fabric Networking API calls are resolved reflectively so the
- * common initializer never links client-only classes on a dedicated server.
+ * Fabric port of Forge's SimpleChannel networking.
+ *
+ * Server-side calls are linked at compile time so a Fabric API signature
+ * mismatch fails the build instead of silently dropping every packet. The
+ * client-only half lives in ClientNetworkSupport and is reached by name, so a
+ * dedicated server never links net.minecraft.client classes.
  */
 public final class FabricNetworkSupport {
+  private static final String LOG = "SplineRoads/net";
+
   public interface Receiver {
     void receive(FriendlyByteBuf buf, MinecraftServer server, ServerPlayer player);
   }
 
-  private static final String SERVER = "net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking";
-  private static final String CLIENT = "net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking";
-
   public static void sendToPlayer(ServerPlayer player, ResourceLocation id, FriendlyByteBuf buf) {
+    ServerPlayNetworking.send(player, id, buf);
+  }
+
+  public static void registerServerReceiver(ResourceLocation id, Receiver receiver) {
+    ServerPlayNetworking.registerGlobalReceiver(id,
+        (server, player, handler, buf, responseSender) -> {
+          if (player == null) {
+            System.getLogger(LOG).log(System.Logger.Level.ERROR,
+                "Server packet on " + id + " arrived without a player; action ignored");
+            return;
+          }
+          receiver.receive(buf, server, player);
+        });
+  }
+
+  /** Reached only from the client entrypoint. */
+  public static void registerClientReceiver(ResourceLocation id, Receiver receiver) {
     try {
-      Class<?> api = Class.forName(SERVER);
-      for (Method m : api.getMethods()) {
-        if (m.getName().equals("send") && m.getParameterCount() == 3) {
-          m.invoke(null, player, id, buf);
-          return;
-        }
-      }
-      throw new IllegalStateException("ServerPlayNetworking.send not found");
-    } catch (ReflectiveOperationException failure) {
-      throw new IllegalStateException("Fabric networking API unavailable", failure);
+      Class<?> helper = Class.forName("net.minecraftforge.network.ClientNetworkSupport");
+      helper.getMethod("register", ResourceLocation.class, Receiver.class).invoke(null, id, receiver);
+    } catch (Throwable failure) {
+      throw new IllegalStateException("Cannot register client channel " + id, failure);
     }
   }
 
   public static void sendToServer(ResourceLocation id, FriendlyByteBuf buf) {
     try {
-      Class<?> api = Class.forName(CLIENT);
-      for (Method m : api.getMethods()) {
-        if (m.getName().equals("send") && m.getParameterCount() == 2) {
-          m.invoke(null, id, buf);
-          return;
-        }
-      }
-      throw new IllegalStateException("ClientPlayNetworking.send not found");
-    } catch (ReflectiveOperationException failure) {
-      throw new IllegalStateException("Fabric client networking API unavailable", failure);
-    }
-  }
-
-  private static void register(String className, ResourceLocation id, Receiver receiver, boolean serverSide) {
-    try {
-      Class<?> api = Class.forName(className);
-      Method target = null;
-      for (Method m : api.getMethods()) {
-        if (m.getName().equals("registerGlobalReceiver") && m.getParameterCount() == 2) {
-          if (target == null || m.getParameterTypes()[1].isInterface()) target = m;
-        }
-      }
-      if (target == null) throw new NoSuchMethodException("registerGlobalReceiver");
-      Class<?> listener = target.getParameterTypes()[1];
-      Object proxy = Proxy.newProxyInstance(FabricNetworkSupport.class.getClassLoader(),
-          new Class<?>[]{listener}, (p, method, args) -> {
-            if (method.getDeclaringClass() == Object.class) {
-              return switch (method.getName()) {
-                case "hashCode" -> System.identityHashCode(p);
-                case "equals" -> p == args[0];
-                default -> "SplineRoads channel";
-              };
-            }
-            FriendlyByteBuf buf = null;
-            MinecraftServer server = null;
-            ServerPlayer player = null;
-            if (args != null) for (Object arg : args) {
-              if (arg instanceof FriendlyByteBuf b) buf = b;
-              else if (arg instanceof MinecraftServer s) server = s;
-              else if (arg instanceof ServerPlayer sp) player = sp;
-            }
-            if (buf != null) receiver.receive(buf, server, player);
-            return null;
-          });
-      target.invoke(null, id, proxy);
+      Class<?> helper = Class.forName("net.minecraftforge.network.ClientNetworkSupport");
+      helper.getMethod("send", ResourceLocation.class, FriendlyByteBuf.class)
+          .invoke(null, id, buf);
     } catch (Throwable failure) {
-      System.getLogger("SplineRoads/net").log(System.Logger.Level.ERROR,
-          "Cannot register channel " + id + " (" + className + ")", failure);
+      throw new IllegalStateException("Fabric client networking unavailable", failure);
     }
   }
 
-  public static void registerServerReceiver(ResourceLocation id, Receiver receiver) {
-    register(SERVER, id, receiver, true);
+  /** Returns the client world dimension id, or null on a dedicated server / no world. */
+  public static String clientDimension() {
+    try {
+      Class<?> helper = Class.forName("net.minecraftforge.network.ClientNetworkSupport");
+      return (String) helper.getMethod("dimension").invoke(null);
+    } catch (Throwable absent) {
+      return null;
+    }
   }
-  public static void registerClientReceiver(ResourceLocation id, Receiver receiver) {
-    register(CLIENT, id, receiver, false);
-  }
+
   private FabricNetworkSupport() {}
 }

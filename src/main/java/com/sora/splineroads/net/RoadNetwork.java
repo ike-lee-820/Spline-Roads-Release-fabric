@@ -533,12 +533,12 @@ public final class RoadNetwork {
   }
 
   public static void requestRoadSync(){
-    var level=net.minecraft.client.Minecraft.getInstance().level;if(level==null)return;
-    var tag=new CompoundTag();tag.putString("Action","roadSyncRetry");tag.putString("Dimension",level.dimension().location().toString());CHANNEL.sendToServer(new Action(tag));
+    var dimension=net.minecraftforge.network.FabricNetworkSupport.clientDimension();if(dimension==null)return;
+    var tag=new CompoundTag();tag.putString("Action","roadSyncRetry");tag.putString("Dimension",dimension);CHANNEL.sendToServer(new Action(tag));
   }
   public static void ackBatch(UUID id){
-    var level=net.minecraft.client.Minecraft.getInstance().level;if(level==null)return;
-    var tag=new CompoundTag();tag.putString("Action","roadBatchAck");tag.putString("Dimension",level.dimension().location().toString());tag.putUUID("Batch",id);CHANNEL.sendToServer(new Action(tag));
+    var dimension=net.minecraftforge.network.FabricNetworkSupport.clientDimension();if(dimension==null)return;
+    var tag=new CompoundTag();tag.putString("Action","roadBatchAck");tag.putString("Dimension",dimension);tag.putUUID("Batch",id);CHANNEL.sendToServer(new Action(tag));
   }
   private static void resync(ServerPlayer player,Watching state){resync(player,state,false);}
   private static void resync(ServerPlayer player,Watching state,boolean resetRoads){
