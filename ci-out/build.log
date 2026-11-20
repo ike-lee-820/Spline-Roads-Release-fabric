@@ -1,5 +1,3 @@
-Downloading https://services.gradle.org/distributions/gradle-8.6-bin.zip
-............10%.............20%............30%.............40%.............50%............60%.............70%.............80%............90%.............100%
 
 Welcome to Gradle 8.6!
 
@@ -15,12 +13,6 @@ Daemon will be stopped at the end of the build
 
 > Configure project :
 Fabric Loom: 1.6.12
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Using of the official minecraft mappings is at your own risk!
-Please make sure to read and understand the following license:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# (c) 2020 Microsoft Corporation. These mappings are provided "as-is" and you bear the risk of using them. You may copy and use the mappings for development purposes, but you may not redistribute the mappings complete and unmodified. Microsoft makes no warranties, express or implied, with respect to the mappings provided here.  Use and modification of this document or the source code (in any form) of Minecraft: Java Edition is governed by the Minecraft End User License Agreement available at https://account.mojang.com/documents/minecraft_eula.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 :remapping 54 mods from modImplementation (java-api)
 
 > Task :compileStubJava
@@ -28,17 +20,32 @@ Please make sure to read and understand the following license:
 > Task :stubClasses
 
 > Task :compileJava
+/home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/fabric/mixin/RenderChunkMixin.java:17: warning: Mixin target net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk is public and should be specified in value
+@Mixin(targets = "net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk")
+^
 /home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/fabric/mixin/MtrDataMixin.java:10: warning: Mixin target org.mtr.core.data.Data is public and should be specified in value
 @Mixin(targets = "org.mtr.core.data.Data", remap = false)
 ^
 /home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/fabric/mixin/MtrSimulatorMixin.java:10: warning: Mixin target org.mtr.core.simulation.Simulator is public and should be specified in value
 @Mixin(targets = "org.mtr.core.simulation.Simulator", remap = false)
 ^
+/home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/fabric/mixin/RebuildTaskMixin.java:67: warning: Cannot find target method "lambda$doTask$0(Ljava/util/List;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/RenderType;Lcom/mojang/blaze3d/vertex/BufferBuilder$RenderedBuffer;)V" for @Inject.method="lambda$doTask$0(Ljava/util/List;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/RenderType;Lcom/mojang/blaze3d/vertex/BufferBuilder$RenderedBuffer;)V" in net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask
+  @Inject(method = UPLOAD_LAMBDA, at = @At("HEAD"), require = 0)
+  ^
+/home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/fabric/mixin/RebuildTaskMixin.java:84: warning: Cannot find target method "lambda$doTask$1(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Ljava/util/List;Ljava/lang/Throwable;)Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkTaskResult;" for @Inject.method="lambda$doTask$1(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Ljava/util/List;Ljava/lang/Throwable;)Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkTaskResult;" in net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask
+  @Inject(method = FINISH_LAMBDA, at = @At("HEAD"), require = 0)
+  ^
+/home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/fabric/mixin/RebuildTaskMixin.java:73: warning: Cannot find target method "lambda$doTask$0(Ljava/util/List;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/RenderType;Lcom/mojang/blaze3d/vertex/BufferBuilder$RenderedBuffer;)V" for @Redirect.method="lambda$doTask$0(Ljava/util/List;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/RenderType;Lcom/mojang/blaze3d/vertex/BufferBuilder$RenderedBuffer;)V" in net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask
+  @Redirect(method = UPLOAD_LAMBDA, require = 0,
+  ^
+/home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/fabric/mixin/RebuildTaskMixin.java:91: warning: Cannot find target method "lambda$doTask$1(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Ljava/util/List;Ljava/lang/Throwable;)Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkTaskResult;" for @Redirect.method="lambda$doTask$1(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Ljava/util/List;Ljava/lang/Throwable;)Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkTaskResult;" in net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask
+  @Redirect(method = FINISH_LAMBDA, require = 0,
+  ^
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 Note: /home/runner/work/Spline-Roads-Release-fabric/Spline-Roads-Release-fabric/src/main/java/com/sora/splineroads/compat/mtr/MtrReflection.java uses unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
-2 warnings
+7 warnings
 
 > Task :processResources
 > Task :classes
@@ -55,5 +62,5 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :assemble
 > Task :build
 
-BUILD SUCCESSFUL in 1m 1s
+BUILD SUCCESSFUL in 31s
 7 actionable tasks: 7 executed
